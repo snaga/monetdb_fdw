@@ -1,0 +1,6 @@
+# monetdb_fdw extension
+comment = 'a monetdb foreign-data wrapper'
+default_version = '0.0'
+module_pathname = '$libdir/monetdb_fdw'
+relocatable = true
+
