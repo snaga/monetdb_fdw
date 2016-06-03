@@ -96,7 +96,11 @@ static const struct MonetdbFdwOption valid_options[] = {
 
 static void monetdbGetForeignRelSize(PlannerInfo *, RelOptInfo *, Oid);
 static void monetdbGetForeignPaths(PlannerInfo *, RelOptInfo *, Oid);
-static ForeignScan *monetdbGetForeignPlan(PlannerInfo *, RelOptInfo *, Oid, ForeignPath *, List *, List *);
+static ForeignScan *monetdbGetForeignPlan(PlannerInfo *, RelOptInfo *, Oid, ForeignPath *, List *, List *
+#if PG_VERSION_NUM >= 90500
+, Plan *
+#endif
+);
 static void monetdbExplainForeignScan(ForeignScanState *, ExplainState *);
 static void monetdbBeginForeignScan(ForeignScanState *, int);
 static TupleTableSlot *monetdbIterateForeignScan(ForeignScanState *);
@@ -348,6 +352,9 @@ monetdbGetForeignPaths(PlannerInfo *root,
 				   total_cost,
 				   NIL,           /* no pathkeys */
 				   NULL,          /* no outer rel either */
+#if PG_VERSION_NUM >= 90500
+                                   NULL,
+#endif
 				   coptions));
 
   /*
@@ -363,7 +370,12 @@ monetdbGetForeignPlan(PlannerInfo *root,
 		       Oid foreigntableid,
 		       ForeignPath *best_path,
 		       List *tlist,
-		       List *scan_clauses)
+		       List *scan_clauses
+#if PG_VERSION_NUM >= 90500
+                       ,
+                       Plan *outer_plan
+#endif
+                       )
 {
   Index           scan_relid = baserel->relid;
 
@@ -381,7 +393,13 @@ monetdbGetForeignPlan(PlannerInfo *root,
 			  scan_clauses,
 			  scan_relid,
 			  NIL,    /* no expressions to evaluate */
-			  best_path->fdw_private);
+			  best_path->fdw_private
+#if (PG_VERSION_NUM >= 90500)
+                         ,NIL /* no scan_tlist either */
+                         ,NIL   /* no remote quals */
+                         ,outer_plan
+#endif
+                         );
 }
 
 static void
