@@ -347,6 +347,9 @@ monetdbGetForeignPaths(PlannerInfo *root,
    */
   add_path(baserel, (Path *)
 	   create_foreignscan_path(root, baserel,
+#if PG_VERSION_NUM >= 90600
+				   NULL, /* path target */
+#endif
 				   baserel->rows,
 				   startup_cost,
 				   total_cost,
