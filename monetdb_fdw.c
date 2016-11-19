@@ -71,7 +71,7 @@ typedef struct MonetdbFdwExecutionState
 struct MonetdbFdwOption
 {
   const char *optname;
-  Oid                     optcontext;             /* Oid of catalog in which option may appear */
+  Oid         optcontext;             /* Oid of catalog in which option may appear */
 };
 
 extern Datum monetdb_fdw_handler(PG_FUNCTION_ARGS);
@@ -466,6 +466,8 @@ monetdbBeginForeignScan(ForeignScanState *node, int eflags)
 	char *dbname;
 	char *table;
 	char *query;
+
+	char q[1024];
 	
 	monetdbGetOptions(RelationGetRelid(node->ss.ss_currentRelation),
 					  &host, &port, &user, &passwd, &dbname, &table, &query);
@@ -491,6 +493,25 @@ monetdbBeginForeignScan(ForeignScanState *node, int eflags)
   festate->dbh = mapi_connect(host, atoi(port), user, passwd, "sql", dbname);
   if (mapi_error(festate->dbh))
 	  monetdb_die(festate->dbh, festate->hdl);
+
+  if ( !query )
+          snprintf(q, sizeof(q), "SELECT * FROM %s", table);
+  else
+          strncpy(q, query, sizeof(q));
+
+#ifdef _DEBUG
+  elog(NOTICE, "monetdb_fdw: monetdbBeginForeignScan: query=%s", query);
+#endif
+
+  if ((festate->hdl = mapi_query(festate->dbh, q)) == NULL ||
+          mapi_error(festate->dbh) != MOK)
+  {
+          monetdb_die(festate->dbh, festate->hdl);
+  }
+
+#ifdef _DEBUG
+  elog(NOTICE, "monetdb_fdw: monetdbBeginForeignScan: mapi_query done.");
+#endif
 
   festate->rel       = node->ss.ss_currentRelation;
   festate->linecount = 0;
@@ -570,41 +591,6 @@ monetdbIterateForeignScan(ForeignScanState *node)
 
   errcallback.previous = error_context_stack;
   error_context_stack  = &errcallback;
-
-  if (!festate->hdl)
-  {
-	  char *host;
-	  char *port;
-	  char *user;
-	  char *passwd;
-	  char *dbname;
-	  char *table;
-	  char *query;
-
-	  char q[1024];
-	  
-	  monetdbGetOptions(RelationGetRelid(node->ss.ss_currentRelation),
-						&host, &port, &user, &passwd, &dbname, &table, &query);
-	  
-	  if ( !query )
-		  snprintf(q, sizeof(q), "SELECT * FROM %s", table);
-	  else
-		  strncpy(q, query, sizeof(q));
-
-#ifdef _DEBUG
-	  elog(NOTICE, "monetdb_fdw: monetdbIterateForeignScan: query=%s", query);
-#endif
-
-	  if ((festate->hdl = mapi_query(festate->dbh, q)) == NULL ||
-		  mapi_error(festate->dbh) != MOK)
-	  {
-		  monetdb_die(festate->dbh, festate->hdl);
-	  }
-
-#ifdef _DEBUG
-	  elog(NOTICE, "monetdb_fdw: monetdbIterateForeignScan: mapi_query done.");
-#endif
-  }
 
   /*
    * The protocol for loading a virtual tuple into a slot is first
