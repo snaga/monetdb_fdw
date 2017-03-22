@@ -5,15 +5,15 @@ Introduction
 ------------
 
 This PostgreSQL extension implements
-a [Foreign Data Wrapper (FDW)] (https://wiki.postgresql.org/wiki/Foreign_data_wrappers)
-for [MonetDB] (https://www.monetdb.org/Home).
+a [Foreign Data Wrapper (FDW)](https://wiki.postgresql.org/wiki/Foreign_data_wrappers)
+for [MonetDB](https://www.monetdb.org/Home).
 
 
 Building
 ------------
 
 To compile the MonetDB foreign data wrapper,
-MonetDB [MAPI library] (https://www.monetdb.org/Documentation/Manuals/SQLreference/Programming/MAPI) is needed.
+MonetDB [MAPI library](https://www.monetdb.org/Documentation/Manuals/SQLreference/Programming/MAPI) is needed.
 So please install MonetDB client interface library development files.
 
     # Fedora, CentOS
